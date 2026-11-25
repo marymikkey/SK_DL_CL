@@ -86,10 +86,10 @@ class XMLtoYOLOConverter:
                     cls_id = self.class_mapping[cls]
                     bbox = obj.find("bndbox")
 
-                    xmin = int(bbox.find("xmin").text)
-                    ymin = int(bbox.find("ymin").text)
-                    xmax = int(bbox.find("xmax").text)
-                    ymax = int(bbox.find("ymax").text)
+                    xmin = float(bbox.find("xmin").text)
+                    ymin = float(bbox.find("ymin").text)
+                    xmax = float(bbox.find("xmax").text)
+                    ymax = float(bbox.find("ymax").text)
 
                     x_center = ((xmin + xmax) / 2) / img_width
                     y_center = ((ymin + ymax) / 2) / img_height
@@ -106,10 +106,12 @@ class DatasetProcessor:
     Класс для обработки датасета: разбиение на train/val 80/20, создание YAML-файла.
     """
 
-    def __init__(self, dataset_path, class_mapping, val_ratio=0.2):
+    def __init__(self, dataset_path, class_mapping, class_names, val_ratio=0.2, seed=42):
         self.dataset_path = dataset_path
         self.class_mapping = class_mapping
+        self.class_names = class_names
         self.val_ratio = val_ratio
+        self.seed = seed
 
     def split_train_validation(self):
         train_image_folder = os.path.join(self.dataset_path, "train/images")
@@ -117,11 +119,15 @@ class DatasetProcessor:
         val_image_folder = os.path.join(self.dataset_path, "val/images")
         val_label_folder = os.path.join(self.dataset_path, "val/labels")
 
+        if os.path.isdir(val_image_folder) and os.listdir(val_image_folder):
+            print("Validation уже создан, повторное разбиение пропущено")
+            return
+
         os.makedirs(val_image_folder, exist_ok=True)
         os.makedirs(val_label_folder, exist_ok=True)
 
-        images = [f for f in os.listdir(train_image_folder) if f.endswith(('.jpg', '.png'))]
-        random.shuffle(images)
+        images = sorted(f for f in os.listdir(train_image_folder) if f.endswith(('.jpg', '.png')))
+        random.Random(self.seed).shuffle(images)
         val_size = int(len(images) * self.val_ratio)
         val_images = images[:val_size]
         train_images = images[val_size:]
@@ -136,13 +142,9 @@ class DatasetProcessor:
 
     def create_yaml(self):
 
-        unique_classes = set(self.class_mapping.values())
-        num_classes = len(unique_classes)
-
-        if num_classes == 1:
-            class_names = ["Crack"]
-        else:
-            class_names = sorted(set(self.class_mapping.keys()))
+        num_classes = len(set(self.class_mapping.values()))
+        class_names = self.class_names
+        assert len(class_names) == num_classes
 
         yaml_path = os.path.join(self.dataset_path, "data.yaml")
 
@@ -161,6 +163,7 @@ class YOLOEvaluator:
 
     def evaluate(self):
         results = self.model.val()
+        self.results = results
         mean_ap50 = results.box.map50
         mean_ap50_95 = results.box.map
 
@@ -171,11 +174,13 @@ class YOLOEvaluator:
         print(f"mAP50: {mean_ap50:.4f}, mAP50-95: {mean_ap50_95:.4f}")
 
     def plot_precision_recall(self):
-        results = self.model.val()
+        results = getattr(self, "results", None)
+        if results is None:
+            results = self.model.val()
         if hasattr(results.box, "curves_results") and results.box.curves_results:
             pr_curve = results.box.curves_results[0]
             recall = pr_curve[0]
-            precision = pr_curve[1].flatten()
+            precision = np.asarray(pr_curve[1]).mean(axis=0)
             plt.figure(figsize=(6, 6))
             plt.plot(recall, precision, marker=".", label="Precision-Recall Curve")
             plt.xlabel("Recall")
@@ -187,7 +192,7 @@ class YOLOEvaluator:
         else:
             print("Precision-Recall Curve не построен (пустые результаты).")
 
-def run_pipeline(base_path, class_mapping, model_name, epochs=100, batch_size=32, img_size=640, device="cuda"):
+def run_pipeline(base_path, class_mapping, class_names, model_name, epochs=100, batch_size=32, img_size=640, device="cuda"):
     """
     Полный пайплайн: конвертация аннотаций, разбиение train/val, создание YAML, тренировка, оценка и предсказания
     """
@@ -204,7 +209,7 @@ def run_pipeline(base_path, class_mapping, model_name, epochs=100, batch_size=32
     )
     xml_converter.convert()
 
-    dataset_processor = DatasetProcessor(base_path, class_mapping)
+    dataset_processor = DatasetProcessor(base_path, class_mapping, class_names)
     dataset_processor.split_train_validation()
     dataset_processor.create_yaml()
 
@@ -242,6 +247,8 @@ class_mapping_multi = {
         "D20": 2,
         "D40": 3, "D43": 3, "D44": 3
     }
+class_names_one = ["Crack"]
+class_names_multi = ["Linear Longitudinal Crack", "Linear Lateral Crack", "Alligator Crack", "Other Corruption"]
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="YOLO Training Pipeline")
@@ -257,6 +264,7 @@ if __name__ == "__main__":
         run_pipeline(
             base_path=china_path,
             class_mapping=class_mapping_one,
+            class_names=class_names_one,
             model_name="yolo11s.pt",
             epochs=100,
             batch_size=32,
@@ -268,6 +276,7 @@ if __name__ == "__main__":
         run_pipeline(
             base_path=japan_path,
             class_mapping=class_mapping_multi,
+            class_names=class_names_multi,
             model_name="yolo11s.pt",
             epochs=100,
             batch_size=32,

@@ -40,8 +40,9 @@ class CrackDataset(Dataset):
     def __init__(self, images_dir, masks_dir, transform=None, target_size=(512, 512)):
         self.images_dir = images_dir
         self.masks_dir = masks_dir
-        self.image_files = sorted(os.listdir(images_dir))
-        self.mask_files  = sorted(os.listdir(masks_dir))
+        masks = {os.path.splitext(f)[0]: f for f in os.listdir(masks_dir)}
+        self.image_files = sorted(f for f in os.listdir(images_dir) if os.path.splitext(f)[0] in masks)
+        self.mask_files  = [masks[os.path.splitext(f)[0]] for f in self.image_files]
         self.transform = transform
         self.target_size = target_size 
         
@@ -59,8 +60,7 @@ class CrackDataset(Dataset):
         image = cv2.resize(image, self.target_size)
         mask = cv2.resize(mask, self.target_size, interpolation=cv2.INTER_NEAREST)
         
-        if 255 in np.unique(mask):
-            mask = mask // 255
+        mask = (mask > 127).astype(np.uint8)
         
         image = np.transpose(image, (2, 0, 1)).astype(np.float32) / 255.0
         
@@ -289,8 +289,7 @@ class Predictor:
                 pred_mask = (probs > self.threshold).astype(np.uint8)
             true_mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
             true_mask = cv2.resize(true_mask, self.target_size, interpolation=cv2.INTER_NEAREST)
-            if 255 in np.unique(true_mask):
-                true_mask = true_mask // 255
+            true_mask = (true_mask > 127).astype(np.uint8)
             true_flat = true_mask.flatten()
             pred_flat = pred_mask.flatten()
             TP = np.sum((true_flat == 1) & (pred_flat == 1))
@@ -342,12 +341,13 @@ def main():
             best_state = copy.deepcopy(model.state_dict())
         scheduler.step()
     
-    if best_state is not None:
-        final_model_path = os.path.join(models_dir, f"best_model_{args.loss_variant}.pth")
-        torch.save(best_state, final_model_path)
-        print("Лучшее состояние модели сохранено по пути:", final_model_path)
+    if best_state is None:
+        best_state = copy.deepcopy(model.state_dict())
+    final_model_path = os.path.join(models_dir, f"best_model_{args.loss_variant}.pth")
+    torch.save(best_state, final_model_path)
+    print("Лучшее состояние модели сохранено по пути:", final_model_path)
     
-    model.load_state_dict(torch.load(final_model_path))
+    model.load_state_dict(torch.load(final_model_path, map_location=device))
     val_loss, true_masks, pred_masks = trainer.validate()
     final_metrics = calculate_metrics(true_masks, pred_masks)
     print("Final metrics on validation set:", final_metrics)
