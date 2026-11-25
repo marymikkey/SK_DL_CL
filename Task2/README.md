@@ -4,15 +4,15 @@
 This project involves semantic segmentation of pavement cracks using a U-Net++ neural network architecture. 
 The goal is to accurately detect and segment cracks of varying sizes and shapes on road surfaces.
 
-## ✨ Features
+## Features
 
--  **Semantic segmentation** of road cracks (binary: crack vs. background)
--  **UNet++ architecture** using `segmentation-models-pytorch`
--  Trained on **CRACK500** dataset
--  Supports evaluation with ROC / PR curves, loss tracking, and penta diagrams
--  **Fully containerized** with Docker
+- **Semantic segmentation** of road cracks (binary: crack vs. background)
+- **UNet++ architecture** using `segmentation-models-pytorch`
+- Trained on **CRACK500** dataset
+- Supports evaluation with ROC / PR curves, loss tracking, and penta diagrams
+- **Fully containerized** with Docker
 - Works on **GPU & CPU**
--  Organized structure with automatic data prep and training pipeline
+- Organized structure with automatic data prep and training pipeline
 
 ---
 
@@ -82,15 +82,15 @@ Task2/
 
 ---
 
-## 📌 Running the Project using DockerHub
+## Running the Project using DockerHub
 
-### 1️⃣ Pull the Prebuilt Docker Image
+### 1. Pull the Prebuilt Docker Image
 
 ```bash
 docker pull marymikkey/crack_semsegm_unetpp:latest
 ```
 
-### 2️⃣ Run the Docker Container
+### 2. Run the Docker Container
 
 #### Using GPU:
 
@@ -104,7 +104,7 @@ docker run --gpus all -v $(pwd)/Task2:/app/Task2 -it marymikkey/crack_semsegm_un
 docker run -v $(pwd)/Task2:/app/Task2 -e USE_CPU=true -it marymikkey/crack_semsegm_unetpp
 ```
 
-### 3️⃣ Train & Evaluate the Model
+### 3. Train & Evaluate the Model
 
 Inside the container, run:
 
@@ -131,7 +131,7 @@ python3 run.py --loss_variant combined --epochs 50
 
 ---
 
-## 🧠 Python Dependencies
+## Python Dependencies
 
 ```txt
 torch
@@ -145,7 +145,7 @@ tqdm
 
 ---
 
-## 🐳 Docker Image Details
+## Docker Image Details
 
 - **Base Image**: `nvidia/cuda:12.1.1-devel-ubuntu20.04`  
 - **Python Version**: 3.9  

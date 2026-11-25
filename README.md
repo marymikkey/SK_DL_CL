@@ -1,6 +1,6 @@
 # Road damage: detection, segmentation, continual learning
 
-Три задачи по компьютерному зрению на дорожном покрытии (Skoltech, весна 2025).
+Три задачи по компьютерному зрению на дорожном покрытии.
 
 | Задача | Данные | Модель | Результат |
 |---|---|---|---|
@@ -15,6 +15,4 @@ Task1 и Task2 упакованы в Docker (GPU/CPU), образы на Docker 
   <img src="assets/China_MotorBike_002109.jpg" width="49%">
 </p>
 
-Датасеты и веса в репозиторий не входят. RDD2022 и CRACK500 — открытые датасеты; структура папок описана в README каждой задачи.
-
-Stack: Python, PyTorch, Ultralytics, segmentation-models-pytorch, Avalanche, OpenCV, Docker.
+Данные: [RDD2022](https://arxiv.org/abs/2209.08538), [CRACK500](https://arxiv.org/abs/1901.06340). Структура папок — в README каждой задачи.
