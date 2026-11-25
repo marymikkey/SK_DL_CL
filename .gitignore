@@ -3,3 +3,12 @@
 .DS_Store
 ._*
 
+
+# data and weights
+*.pt
+*.pth
+Task1/China_MotorBike/
+Task1/Japan/
+Task1/predictions_*/results*/
+Task2/data/
+Task2/results/models/

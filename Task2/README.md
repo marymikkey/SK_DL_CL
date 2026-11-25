@@ -76,6 +76,7 @@ Task2/
 │   ├── plots/           # Metrics and evaluation plots
 │   └── predictions/     # Predictions on the test set
 ├── Pavement_Crack_Detection_SemSegm_Mary.ipynb # Main notebook
+├── run.py                                       # training script (Docker entrypoint)
 └── README.md
 ```
 
@@ -108,24 +109,24 @@ docker run -v $(pwd)/Task2:/app/Task2 -e USE_CPU=true -it marymikkey/crack_semse
 Inside the container, run:
 
 ```bash
-python3 Pavement_Crack_Detection_SemSegm_Mary.py --loss [baseline|tversky|combined] --epochs [NUM_EPOCHS]
+python3 run.py --loss_variant [baseline|tversky|combined] --epochs [NUM_EPOCHS]
 ```
 
 **Examples:**
 
 Train with **Dice Loss** for 50 epochs:
 ```bash
-python3 Pavement_Crack_Detection_SemSegm_Mary.py --loss baseline --epochs 50
+python3 run.py --loss_variant baseline --epochs 50
 ```
 
 Train with **Tversky Loss** for 60 epochs:
 ```bash
-python3 Pavement_Crack_Detection_SemSegm_Mary.py --loss tversky --epochs 60
+python3 run.py --loss_variant tversky --epochs 60
 ```
 
 Train with **Combined Loss**:
 ```bash
-python3 Pavement_Crack_Detection_SemSegm_Mary.py --loss combined --epochs 50
+python3 run.py --loss_variant combined --epochs 50
 ```
 
 ---

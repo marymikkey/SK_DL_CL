@@ -46,9 +46,9 @@ python3 Task1_Roads_YOLO_Mary.py --train_china --train_japan
 
 ```
 Task1/
-│   Task1_Roads_YOLO_Mary.ipynb
-│   yolo11s.pt
-│   yolo11m.pt
+│   Task1_Roads_YOLO_Mary.py      # training pipeline
+│   Roads_YOLO_Mary_DEV.ipynb     # experiments
+│   Dockerfile, requirements.txt
 │
 ├── China_MotorBike/
 │   ├── data.yaml
@@ -117,10 +117,14 @@ After training, the model will:
 - **Generate Precision-Recall Curves**
 - **Compute mAP (mean Average Precision)**
 
-For evaluation:
-```bash
-python3 Task1_Roads_YOLO_Mary.py --evaluate
-```
+Evaluation runs automatically after training (`model.val()` on the validation split). mAP is saved to `predictions_*/mean_ap.txt`.
+
+| Dataset | Classes | Model | mAP50 | mAP50-95 |
+|---|---|---|---|---|
+| China_MotorBike | 1 (crack) | YOLO11s | 0.906 | 0.595 |
+| Japan | 4 damage types | YOLO11s | 0.599 | 0.310 |
+
+Training: 100 epochs, batch 32, image size 640.
 ---
 
 
